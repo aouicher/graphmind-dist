@@ -126,7 +126,28 @@ graphmind sync                # updates CLAUDE.md in current project
 graphmind sync --all          # updates CLAUDE.md for all registered projects
 ```
 
-### 3. Claude Code skill (optional)
+### 3. Claude Code search hook (recommended)
+
+Installs a Claude Code hook that transparently rewrites `grep`/`find`/`rg` commands to `graphmind search`. Claude gets graph-powered results without changing its workflow.
+
+```bash
+graphmind install-hook
+```
+
+This registers hooks in `~/.claude/settings.json` for:
+- **PreToolUse** — rewrites grep/find/rg to `graphmind search`, provides graph results for Grep/Glob/LS tools
+- **SessionStart** — loads project context (stats, structure) at session start
+- **UserPromptSubmit** — pre-fetches relevant graph context based on the user's prompt
+- **PostToolUse** — enriches results with graph-aware suggestions
+
+The hook automatically bypasses rewriting for exhaustive searches (e.g., "find all occurrences", `grep -c`, pipes to `wc`/`sort`).
+
+To uninstall:
+```bash
+graphmind uninstall-hook
+```
+
+### 4. Claude Code skill (optional)
 
 Installs a skill that teaches Claude the 3-layer rule: query the graph first, check memory second, read raw files only when needed.
 
@@ -134,7 +155,7 @@ Installs a skill that teaches Claude the 3-layer rule: query the graph first, ch
 graphmind install-skill
 ```
 
-### 4. Git hooks (optional)
+### 5. Git hooks (optional)
 
 Auto-rebuild on commit, impact check on push:
 
@@ -269,6 +290,15 @@ graphmind session save ["message"]  # save session summary
 graphmind session history [slug]    # recent sessions
 ```
 
+### Claude Code Integration
+```bash
+graphmind install-hook        # install search hook in Claude Code
+graphmind uninstall-hook      # remove search hook
+graphmind install-skill       # install Claude Code skill
+graphmind sync [slug]         # inject graph context into CLAUDE.md
+graphmind sync --all          # update CLAUDE.md for all projects
+```
+
 ### Git Hooks
 ```bash
 graphmind hooks install       # post-commit + pre-push
@@ -319,6 +349,27 @@ graphmind exposes 24 tools via MCP (Model Context Protocol):
 | Terraform (HCL) | `.tf`, `.tfvars` | Stable |
 | YAML | `.yml`, `.yaml` | Stable |
 | Markdown | `.md` | Stable |
+| C | `.c`, `.h` | Stable |
+| Objective-C | `.m`, `.mm` | Stable |
+| Java | `.java` | Stable |
+| PHP | `.php` | Stable |
+| Swift | `.swift` | Stable |
+| Bash | `.sh`, `.bash`, `.zsh` | Stable |
+| Perl | `.pl`, `.pm` | Stable |
+| CSS | `.css` | Stable |
+| SCSS | `.scss`, `.sass` | Stable |
+| HTML | `.html`, `.htm` | Stable |
+| TOML | `.toml` | Stable |
+| Dockerfile | `Dockerfile` | Stable |
+| SQL | `.sql` | Stable |
+| C++ | `.cpp`, `.cc`, `.cxx`, `.hpp` | Stable |
+| C# | `.cs` | Stable |
+| Kotlin | `.kt`, `.kts` | Stable |
+| Dart | `.dart` | Stable |
+| Scala | `.scala`, `.sc` | Stable |
+| R | `.r`, `.R` | Stable |
+| GraphQL | `.graphql`, `.gql` | Stable |
+| PowerShell | `.ps1`, `.psm1` | Stable |
 
 ## Data Storage
 
