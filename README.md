@@ -11,10 +11,11 @@ Persistent, local-first code intelligence for Claude Code. Structural graph + se
 
 Every new Claude Code session starts from zero. Claude re-reads your entire codebase, re-discovers architecture, and forgets every decision you explained last time. Across multiple projects, there's zero visibility into shared dependencies.
 
-**graphmind** fixes this with three layers:
+**graphmind** fixes this with four layers:
 1. **Structural graph** — function-level code knowledge graph per repo (AST-based, tree-sitter)
-2. **Semantic memory** — declarative store for decisions, patterns, conventions
-3. **Cross-project links** — relationships between registered repos
+2. **Semantic embeddings** — vector search over symbols (local ONNX, OpenAI, or Voyage AI)
+3. **Semantic memory** — declarative store for decisions, patterns, conventions
+4. **Cross-project links** — relationships between registered repos
 
 Everything is 100% local. No cloud. No open ports by default. No telemetry.
 
@@ -26,22 +27,25 @@ Everything is 100% local. No cloud. No open ports by default. No telemetry.
 brew install aouicher/graphmind/graphmind
 ```
 
-### Update
+### Cargo
 
 ```bash
-brew upgrade graphmind
+cargo install --git https://github.com/aouicher/graphmind graphmind-cli
 ```
 
-### Other methods
+### Shell script
 
 ```bash
-# Cargo
-cargo install --git https://github.com/aouicher/graphmind graphmind-cli
-
-# Shell script
 curl -fsSL https://raw.githubusercontent.com/aouicher/graphmind/main/scripts/install.sh | bash
+```
 
-# From source
+### Desktop app (macOS)
+
+Download the `.dmg` from [Releases](https://github.com/aouicher/graphmind/releases). The app includes a guided onboarding that installs the CLI, configures PATH, sets up MCP/hooks/skill, and configures embeddings — no terminal needed.
+
+### From source
+
+```bash
 git clone https://github.com/aouicher/graphmind
 cd graphmind
 cargo build --release -p graphmind-cli
@@ -126,6 +130,29 @@ graphmind sync                # updates CLAUDE.md in current project
 graphmind sync --all          # updates CLAUDE.md for all registered projects
 ```
 
+This adds a block like:
+```markdown
+<!-- graphmind:start -->
+## graphmind
+
+Last build: 2026-04-17 | 142 symbols | 87 edges | 34 files
+Languages: typescript (25), javascript (9)
+MCP: `graphmind mcp` (stdio)
+
+### Before editing anything
+- Symbol: `graphmind fn <symbol> --no-tests`
+- File: `graphmind deps <file>`
+- Git changes: `graphmind diff-impact`
+- Find by intent: `graphmind search "handle auth; validate token"`
+
+### Rebuild when
+Structural changes, new modules, after merge.
+Command: `graphmind build`
+<!-- graphmind:end -->
+```
+
+Re-run `graphmind sync` after each build to keep it current.
+
 ### 3. Claude Code search hook (recommended)
 
 Installs a Claude Code hook that transparently rewrites `grep`/`find`/`rg` commands to `graphmind search`. Claude gets graph-powered results without changing its workflow.
@@ -140,7 +167,10 @@ This registers hooks in `~/.claude/settings.json` for:
 - **UserPromptSubmit** — pre-fetches relevant graph context based on the user's prompt
 - **PostToolUse** — enriches results with graph-aware suggestions
 
-The hook automatically bypasses rewriting for exhaustive searches (e.g., "find all occurrences", `grep -c`, pipes to `wc`/`sort`).
+The hook includes built-in intelligence:
+- **Exhaustive search bypass** — detects "find all occurrences", `grep -c`, pipes to `wc`/`sort` and lets them through
+- **Cache deduplication** — identical searches within 5 minutes are skipped (0 tokens cost)
+- **Pattern extraction** — extracts meaningful search terms from grep, find, fd, rg commands and Agent prompts
 
 To uninstall:
 ```bash
@@ -193,10 +223,13 @@ graphmind sync --all
 │  Layer 1: Structural Graph (SQLite + FTS5)   │
 │  Symbols · Edges · Call sites                │
 ├─────────────────────────────────────────────┤
-│  Layer 2: Semantic Memory (JSONL)            │
+│  Layer 2: Semantic Embeddings (SQLite)       │
+│  Cosine search · Graph expansion · RRF      │
+├─────────────────────────────────────────────┤
+│  Layer 3: Semantic Memory (JSONL)            │
 │  Decisions · Patterns · Conventions          │
 ├─────────────────────────────────────────────┤
-│  Layer 3: Cross-Project Links (JSONL)        │
+│  Layer 4: Cross-Project Links (JSONL)        │
 │  Shared symbols · Inferred relationships     │
 ├─────────────────────────────────────────────┤
 │  Rust Core (tree-sitter + napi-rs)           │
@@ -253,9 +286,57 @@ graphmind memory delete <id>
 
 ### Search
 ```bash
-graphmind search "<query>"          # FTS search across symbols
+graphmind search "<query>"          # hybrid search (FTS + semantic + graph)
 graphmind search "<q1>; <q2>"       # multi-query with RRF ranking
 graphmind search "<query>" --kind function
+```
+
+Search uses a 3-stage pipeline:
+1. **FTS5** — exact text matching on symbol names, signatures, docs
+2. **Semantic embeddings** — cosine similarity finds conceptually related symbols (e.g. "money transfer" → `payment_service`)
+3. **Graph expansion** — top results are expanded with 1-hop callers/callees from the structural graph
+
+Results are fused via Reciprocal Rank Fusion (RRF, k=60). Each result shows its source: `[FTS]`, `[SEM]`, `[GRAPH]`, or combinations like `[FTS+SEM+G]`.
+
+### Embeddings
+
+Semantic vector search over symbols. Configured in `~/.graphmind/config.json`:
+
+```json
+{
+  "embedding": {
+    "mode": "voyage",
+    "model": "voyage-code-3",
+    "api_keys": {
+      "voyage": "pa-..."
+    }
+  }
+}
+```
+
+**Providers:**
+
+| Mode | Model (default) | Notes |
+|------|----------------|-------|
+| `local` | `all-MiniLM-L6-v2` (384d) | ONNX, no API key needed |
+| `openai` | `text-embedding-3-small` (1536d) | Supports custom `openai_base_url` |
+| `voyage` | `voyage-code-3` (1024d) | Code-specialized, recommended |
+| `disabled` | — | No embeddings (default) |
+
+Embeddings are computed automatically during `graphmind build` when a provider is configured. If the model changes, the embedding index is rebuilt automatically.
+
+During search, semantic results are enriched with graph context: the structural graph expands top hits with their callers and callees, surfacing related symbols that neither text nor embedding search would find alone.
+
+OpenAI-compatible providers (Azure, proxys) can set a custom base URL:
+```json
+{
+  "embedding": {
+    "mode": "openai",
+    "model": "text-embedding-3-large",
+    "openai_base_url": "https://your-proxy.example.com/v1",
+    "api_keys": { "openai": "sk-..." }
+  }
+}
 ```
 
 ### Export
@@ -301,6 +382,39 @@ graphmind sync [slug]             # inject graph context into CLAUDE.md
 graphmind sync --all              # update CLAUDE.md for all projects
 ```
 
+### Update
+```bash
+graphmind update                  # download and install latest version
+graphmind update --check          # check for updates without installing
+```
+
+If installed via Homebrew, use `brew upgrade graphmind` instead. The desktop app also checks for CLI updates at startup and offers one-click update.
+
+## Token Optimization
+
+MCP responses are optimized for LLM consumption — minimal tokens, maximum signal.
+
+**Compact format (default):** One-line-per-symbol text output instead of verbose JSON. Example:
+```
+>> 5 result(s) for "auth" [FTS+semantic+graph]:
+
+  AuthService [Class] src/services/auth.ts:3 (0.95) [FTS+SEM]
+    implements Service
+  validate_token [Function] src/services/auth.ts:15 (0.82) [FTS+G]
+    (token: string, scope?: string) -> TokenResult
+```
+
+**Field pruning:** No `id`, no null signature/doc/content, no redundant `total_found`/`projects_searched` fields. Only useful information is returned.
+
+**Smart limits:** Default 15 results (not 50). Truncation indicators (`+N more...`) shown only when results are capped.
+
+**Content opt-in:** Symbol source code is omitted by default. Pass `include_content: true` to any tool to get it.
+
+**JSON mode:** Pass `format: "json"` to any tool to get structured JSON output instead of compact text.
+
+**Hook cache deduplication:** The Claude Code hook skips duplicate searches within a 5-minute window. Same query → instant skip (0 tokens). Cache is per-session at `/tmp/graphmind-hook-cache.txt`.
+
+
 ## MCP Tools Reference
 
 graphmind exposes 24 tools via MCP (Model Context Protocol):
@@ -331,6 +445,15 @@ graphmind exposes 24 tools via MCP (Model Context Protocol):
 | `gm_status` | Project health and stats |
 | `gm_context` | Full project context for session start |
 | `gm_list_projects` | All registered projects |
+
+## Security
+
+- **No open ports by default** — MCP uses stdio.
+- **Path traversal protection** — all file ops restricted to registered paths + `~/.graphmind/`.
+- **No network calls by default** — everything runs locally. Embedding API calls only when explicitly configured.
+- **API keys stored locally** — in `~/.graphmind/config.json`, never sent anywhere except the configured provider.
+- **Atomic writes** — memory JSONL writes use tmp+rename to prevent corruption.
+- **MCP write confirmation** — `gm_memory_add` requires explicit confirmation.
 
 ## Language Support
 
@@ -372,22 +495,18 @@ graphmind exposes 24 tools via MCP (Model Context Protocol):
 All data lives in `~/.graphmind/`:
 ```
 ~/.graphmind/
-├── config.json          # registered projects
+├── config.json          # registered projects + embedding settings
 ├── memory/              # JSONL memory files
-├── graphs/<slug>/       # SQLite graph databases
+├── graphs/<slug>/
+│   ├── graph.db         # structural graph (SQLite + FTS5)
+│   ├── embeddings.db    # vector embeddings (SQLite)
+│   ├── meta.json        # build stats
+│   └── cache/           # incremental build cache
 ├── cross-links/         # cross-project relationships
 └── sessions/            # daily session logs
 ```
 
 Everything is plaintext or SQLite — fully inspectable with standard tools.
-
-## Security
-
-- **No open ports by default** — MCP uses stdio.
-- **Path traversal protection** — all file ops restricted to registered paths + `~/.graphmind/`.
-- **No network calls** — everything runs locally.
-- **Atomic writes** — memory JSONL writes use tmp+rename to prevent corruption.
-- **MCP write confirmation** — `gm_memory_add` requires explicit confirmation.
 
 ## Contributing
 
