@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk grep '^version' /Users/aouicher/Dev/graphmind/Cargo.toml\",\"description\":\"Check current version in workspace Cargo.toml\"}",
-  "error": "Exit code 1\n0 matches for '^version'",
-  "timestamp": "2026-05-01T08:00:57.271Z",
-  "retry_count": 2
-}
