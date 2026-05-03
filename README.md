@@ -1,6 +1,5 @@
 # graphmind
 
-[![CI](https://github.com/aouicher/graphmind/actions/workflows/ci.yml/badge.svg)](https://github.com/aouicher/graphmind/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 > Your codebase has memory. Use it.
@@ -27,30 +26,38 @@ Everything is 100% local. No cloud. No open ports by default. No telemetry.
 brew install aouicher/graphmind/graphmind
 ```
 
-### Cargo
-
-```bash
-cargo install --git https://github.com/aouicher/graphmind graphmind-cli
-```
-
 ### Shell script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aouicher/graphmind/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aouicher/graphmind-dist/main/install.sh | bash
+```
+
+### Direct download
+
+Download the binary for your platform from [Releases](https://github.com/aouicher/graphmind-dist/releases/latest):
+
+| Platform | Asset |
+|----------|-------|
+| macOS (Apple Silicon) | `graphmind-cli-macos-arm64` |
+| macOS (Intel) | `graphmind-cli-macos-x64` |
+| Linux (x64) | `graphmind-cli-linux-x64` |
+
+Then:
+```bash
+chmod +x graphmind-cli-*
+mv graphmind-cli-* ~/.local/bin/graphmind
 ```
 
 ### Desktop app (macOS)
 
-Download the `.dmg` from [Releases](https://github.com/aouicher/graphmind/releases). The app includes a guided onboarding that installs the CLI, configures PATH, sets up MCP/hooks/skill, and configures embeddings — no terminal needed.
+Download the `.dmg` from [Releases](https://github.com/aouicher/graphmind-dist/releases/latest):
 
-### From source
+| Platform | Asset |
+|----------|-------|
+| macOS (Apple Silicon) | `GraphMind-macos-arm64.dmg` |
+| macOS (Intel) | `GraphMind-macos-x64.dmg` |
 
-```bash
-git clone https://github.com/aouicher/graphmind
-cd graphmind
-cargo build --release -p graphmind-cli
-cp target/release/graphmind ~/.local/bin/
-```
+The app includes a guided onboarding that configures MCP, hooks, skill, and embeddings — no terminal needed.
 
 ## Quick Start
 
@@ -492,14 +499,6 @@ All data lives in `~/.graphmind/`:
 
 Everything is plaintext or SQLite — fully inspectable with standard tools.
 
-## Contributing
+## License
 
-MIT License. Contributions welcome.
-
-```bash
-git clone https://github.com/aouicher/graphmind
-cd graphmind
-cargo build --release -p graphmind-cli
-cargo clippy --workspace -- -D warnings
-cargo test --workspace
-```
+MIT
