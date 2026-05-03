@@ -2,21 +2,21 @@ class Graphmind < Formula
   desc "Local-first code intelligence CLI with MCP server"
   homepage "https://github.com/aouicher/graphmind"
   license "MIT"
-  version "0.2.67"
+  version "0.2.68"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/aouicher/graphmind-dist/releases/download/v0.2.67/graphmind-cli-macos-arm64"
-      sha256 "6b95aa8854d7b63d154f7400cd6593c4ff6bb697ba4fd1005bafde579df9b7d5"
+      url "https://github.com/aouicher/graphmind-dist/releases/download/v0.2.68/graphmind-cli-macos-arm64"
+      sha256 "66a7321e14b70cbf4e6096da2be5cedba9bc7097929c48c16c28cc5a529f52b4"
     else
-      url "https://github.com/aouicher/graphmind-dist/releases/download/v0.2.67/graphmind-cli-macos-x64"
-      sha256 "4ea0f85868632f5439f6d62eb6a60f2b3f39318cbaca028a9c430950178f7995"
+      url "https://github.com/aouicher/graphmind-dist/releases/download/v0.2.68/graphmind-cli-macos-x64"
+      sha256 "959dacbafb9b8c5ec003eb2ac1d689fd7d7cb549c4d5bd1a8e81e0f201328242"
     end
   end
 
   on_linux do
-    url "https://github.com/aouicher/graphmind-dist/releases/download/v0.2.67/graphmind-cli-linux-x64"
-    sha256 "fc826d77b461947de0e4a0d4c95cc37adab80041ab768dd860a2c7427c4dd976"
+    url "https://github.com/aouicher/graphmind-dist/releases/download/v0.2.68/graphmind-cli-linux-x64"
+    sha256 "1699a7522f2922ec85e85936546b11b3dde15e4aff016d6384d2f1e528fd0fb3"
   end
 
   def install
