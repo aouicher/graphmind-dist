@@ -25,7 +25,7 @@ Everything is 100% local. No cloud. No open ports by default. No telemetry.
 | Homebrew | CLI only | Run `graphmind setup` after install |
 | Shell script | CLI only | Run `graphmind setup` after install |
 | Direct download | CLI only | Run `graphmind setup` after install |
-| Desktop app | CLI + GUI | Guided onboarding — no terminal needed |
+| Desktop app | GUI (installs CLI for you) | Guided onboarding — no terminal needed |
 
 ### Homebrew (macOS/Linux) — CLI only
 
@@ -64,7 +64,7 @@ Download the `.dmg` from [Releases](https://github.com/aouicher/graphmind-dist/r
 | macOS (Apple Silicon) | `GraphMind-macos-arm64.dmg` |
 | macOS (Intel) | `GraphMind-macos-x64.dmg` |
 
-The desktop app includes the CLI and a guided onboarding that configures MCP, hooks, skill, and embeddings — no terminal needed.
+The desktop app installs the CLI for you and runs a guided onboarding that configures MCP, hooks, skill, and embeddings — no terminal needed.
 
 ## Quick Start
 
