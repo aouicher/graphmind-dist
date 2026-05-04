@@ -262,7 +262,7 @@ Configured in `~/.graphmind/config.json`:
 
 | Mode | Model (default) | Notes |
 |------|----------------|-------|
-| `local` | `all-MiniLM-L6-v2` (384d) | ONNX, no API key needed |
+| `local` | `nomic-embed-text-v1.5` (768d) | ONNX, no API key needed |
 | `openai` | `text-embedding-3-small` (1536d) | Supports custom `openai_base_url` |
 | `voyage` | `voyage-code-3` (1024d) | Code-specialized, recommended |
 | `disabled` | — | No embeddings (default) |
